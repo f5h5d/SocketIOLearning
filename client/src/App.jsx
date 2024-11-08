@@ -1,35 +1,57 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'
+import styled from "styled-components"
 
-function App() {
-  const [count, setCount] = useState(0)
+import io from "socket.io-client"
+
+const socket = io.connect("http://localhost:3001")
+
+const App = () => {
+  const [message, setMessage] = useState("")
+  const [messageReceived, setMessageReceived] = useState("")
+  const [room, setRoom] = useState("")
+  const sendMessage = () => {
+    socket.emit("send_message", {message: message, room: room})
+  }
+
+  const joinRoom = () => {
+    if (room !== "") {
+      socket.emit("join_room", room)
+    }
+  }
+  useEffect(() => {
+    socket.on("receive_message", (data) => {
+      setMessageReceived(data.message)
+    })
+  }, [socket])
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <Container>
+      <div className="app">
+        <div className="room">
+          <input onChange={(event) => { setRoom(event.target.value)}}/>
+          <button onClick={joinRoom}>Join Room</button>
+        </div>
+        <input placeholder="Message..." onChange={(event) => { setMessage(event.target.value)}}/>
+        <button onClick={sendMessage}>Send Message</button>
+        <h1>Message: {messageReceived}</h1>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </Container>
   )
 }
+
+const Container = styled.div`
+  width: 100vw;
+  height: 100vh;
+  color: black;
+
+  /* align-items: center; */
+
+  display: flex;
+  justify-content: center; 
+
+  .app {
+    margin-top: 100px;
+  }
+`
 
 export default App
